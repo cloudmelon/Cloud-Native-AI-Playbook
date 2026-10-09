@@ -50,15 +50,15 @@ spec:
 
 Run Busybox image : 
 
-    kubectl run busybox --rm -it --image=busybox /bin/sh
+    kubectl run busybox --rm -it --image=busybox -- /bin/sh
     
 Run nginx image : 
 
-    kubectl run nginx --image=nginx --dry-run -o yaml > pod-sample.yaml
+    kubectl run nginx --image=nginx --dry-run=client -o yaml > pod-sample.yaml
 
 Create a deployment using the following : 
 
-    kubectl create deployment kubeserve --image=nginx:1.7.8
+    kubectl create deployment kubeserve --image=nginx:stable
 
 Scale a deployment using the following : 
 
@@ -79,15 +79,15 @@ Other useful command about query, edit, and delete deployment :
 
 Addtionally, you can also use **kubectl patch** to update an API object in place. An example is like the following : 
 
-    kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+    kubectl patch deployment melon-deploy -p '{"spec":{"template":{"spec":{"terminationGracePeriodSeconds":45}}}}'
 
 ## Play 2 : Rolling updates
 
-**Rolling updates** provide a way to update a deployment to a new container version by gradually updating replicas so that there is no downtime 
+**Rolling updates** provide a way to update a deployment to a new container version by gradually updating replicas while keeping replicas available. Readiness probes, sufficient capacity, and appropriate `maxUnavailable` settings are needed to avoid downtime
 
 Deploying an application : 
 
-     kubectl run kubedeploy --image=nginx
+     kubectl create deployment kubedeploy --image=nginx:stable
 
 
 Or using Yaml definition file :
@@ -111,13 +111,13 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.7.9
+        image: nginx:stable
         ports:
         - containerPort: 80
 ```
 
 Then using the following command : 
-     Kubectl apply -f filename.yaml
+     kubectl apply -f filename.yaml
 
 
 Check status:
@@ -125,14 +125,14 @@ Check status:
      kubectl rollout status deployments kubedeploy
 
 
-     kubectl deployment.apps/nginx-deployment set image deployment.v1.apps/nginx-deployment nginx=nginx:1.9.1 --record
+     kubectl set image deployment/nginx-deployment nginx=nginx:stable-alpine
 
 
 Or
 
-     kubectl set image deployment/kubedeploy nginx=nginx:1.91 --record
+     kubectl set image deployment/kubedeploy nginx=nginx:stable-alpine
 
-**--record** flag records informaiton about the updates so that it can be rolled back later. 
+The removed `--record` flag is no longer used. Deployment Pod-template changes create revisions automatically. Add a human-readable reason with `kubectl annotate deployment/kubedeploy kubernetes.io/change-cause="Switch to Alpine image" --overwrite`. Rollback restores the Pod template; it does not restore external configuration or databases. Floating `stable` tags here illustrate the workflow; use distinct immutable image digests for reliable production rollouts.
 
 
 ## Play 3 : Rollback
@@ -141,7 +141,7 @@ Or
 
 Or simply using : 
 
-     kubectl set image deployment kubedeploy nginx=nginx:1.91 --record=true
+     kubectl rollout history deployment/kubedeploy
 
 Performing an roll back : 
 
@@ -157,7 +157,7 @@ Then you can get back to the specific revision :
 
 Check if rollout successfully using the following : 
 
-     kubectl rollout status deployment/candy-deployment
+     kubectl rollout status deployment/kubedeploy
 
 You'll see the output similar to the following : 
 
@@ -184,7 +184,7 @@ So those just give you a little more control over what actually occurs when you 
 
 Imagine there is one node offline now which host your blue and green application, When you have multiple replicas of the blue pod, the users accessing the blue application are not impacted as they're being served through the other blue pod that's online, however users accessing the green pod, are impacted as that was the only pod running the green application. 
 
-What does Kubernetes do in this case ? If the node came back online immediatelu, then the kubectl process starts and the pods come back. However, if the node was down for more than **5 minutes**, then the pods are **terminated** from that node. Well, Kubernetes considers them as dead. If the pods where part of a replicaset then they're recreated on other nodes. The time it waits for a pod to come back online is known as the pod eviction timeout that is set on the controller manager with a default value of 5 minutes. When the node comes back online after the pod eviction timeout if comes up blank without any pods scheduled on it. 
+When a node becomes unreachable, node conditions and taints drive eviction. Pods normally receive 300-second tolerations for `node.kubernetes.io/not-ready` and `node.kubernetes.io/unreachable`; timing depends on tolerations and cluster configuration. Controllers can recreate evicted Pods on healthy nodes. A single replica can still cause an outage.
 
 If you're not sure the node will be back online within 5 minutes, the safe way is to drain the nodes of all the workloads so that the pods are moved to other nodes in the cluster by using the following command : 
 
@@ -247,4 +247,4 @@ When Kubernetes cluster first set up, there's a taint set up automatically for t
 
 To untaint a node ( here's not a good practice but just to show how to untaint master node ) : 
 
-    kubectl taint nodes master node-role.kubernetes.io/master:NoSchedule-
+    kubectl taint nodes master node-role.kubernetes.io/control-plane:NoSchedule-

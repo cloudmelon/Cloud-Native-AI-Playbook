@@ -1,144 +1,70 @@
-# Playbook Before Part 0 :  Set up Minikube 
+# Set up a local Kubernetes cluster with Minikube
 
-##  Pre-read
-1. If you get started on Kubernetes in 2024 and want to set up your local minikube cluster or playground, check out [this post](https://cloudmelonvision.com/if-i-were-about-to-get-started-on-kubernetes-in-2024/)
-2. Kubernetes cluster architecture and key concepts, check out [this post](https://cloudmelonvision.com/what-is-kubernetes-really-about/)
+Reviewed 9 October 2026. Minikube is a local learning/development cluster. You need at least 2 CPUs, 2 GB free memory, 20 GB free disk space, internet access, and a supported container or VM driver. See the [official installation selector](https://minikube.sigs.k8s.io/docs/start/) for your OS/architecture.
 
-##  Prerequsities
+## Install
 
-### Set up K8S with Minikube 
+On macOS with Homebrew:
 
-You can follow [my article : Playbook Before Part 0 : Minikube setting up in Azure VM ](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/platform-ops/Set%20up%20Minikube%20Cluster.md) article to know about how to install Kubernetes with minikube on a single VM sits in Microsoft Azure.
-
-Find [the article : Playbook Before Part 0 : How to deploy NGINX Ingress in Minikube](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/) article to know about how to install Kubernetes with minikube on a single VM sits in Microsoft Azure.
-
-In your Azure VM OR AWS EC2 instance :
-
-Update current packages of the system to the latest version.
-```
-    sudo apt update
-    sudo apt upgrade
-```
-To check if virtualization is supported on Linux, run the following command and verify that the output is non-empty:
-```
-    grep -E --color 'vmx|svm' /proc/cpuinfo
+```sh
+brew install minikube kubectl
 ```
 
-## Install VirtualBox (Option #1)
+On Linux x86-64, install the stable Minikube binary:
 
-Import the Oracle public key to your system signed the Debian packages using the following commands.
-```
-    wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
-    wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
-```
-you need to add Oracle VirtualBox PPA to Ubuntu system. You can do this by running the below command on your system.
-
-```
-    sudo add-apt-repository "deb http://download.virtualbox.org/virtualbox/debian bionic contrib"
-```
-Update VirtualBox using the following commands :
-  ``` 
-    sudo apt update
-    sudo apt install virtualbox-6.0
-```
-## Install Docker (Option #2)
-
-
-
-## Install Kubectl 
-
-Download the latest release and install kubectl binary with curl on Linux:
-```
-    sudo apt-get update && sudo apt-get install -y apt-transport-https
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-    sudo apt-get update
-    sudo apt-get install -y kubectl
+```sh
+curl -fLO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
 
-## Install Minikube
+Use `minikube-linux-arm64` on ARM64. Install kubectl using the [current official instructions](https://kubernetes.io/docs/tasks/tools/); older `apt.kubernetes.io`, `packages.cloud.google.com`, `apt-key`, and Ubuntu bionic recipes are obsolete. Package installation uses the versioned `pkgs.k8s.io` repositories. Select a kubectl version within one minor version of your API server.
 
-Download a stand-alone binary and use the following command : 
-```
-    curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
-  && chmod +x minikube
-```
+## Start and verify
 
-Add Minikube to your path 
-```
-    sudo mkdir -p /usr/local/bin/
-    sudo install minikube /usr/local/bin/
-```
-## start Minikube
+Install and start Docker first if using the Docker driver, then run as your normal user:
 
-Situation #1: If you're on virtualbox as vm driver
-```
-    minikube start --vm-driver=virtualbox
+```sh
+minikube start --driver=docker
+minikube status
+kubectl config current-context
+kubectl get nodes
+kubectl cluster-info
 ```
 
-While starting the minikube, you can see an output similar to the following :
+Alternatively, use a supported VM driver from the [driver list](https://minikube.sigs.k8s.io/docs/drivers/). Cloud VMs may not support nested virtualization; choose the driver according to the host capabilities.
 
-    <img src="screenshots/Minikubestart.PNG" alt="Minikubestart" width="800px"/>
+If kubectl is not installed separately, Minikube can provide it:
 
-Situation #2:
-
-
-You can use the following command to check if Minikube works well :
-```
-     minikube status
-```
-You can expect an output similar to the following :
-
-    <img src="screenshots/minikubestatus.PNG" alt="Minikubestatus" width="800px"/>
-
-
-## Update Minikube
-
-1. Find the current version
-
-```
-$ minikube version
-minikube version: v1.33.0
+```sh
+minikube kubectl -- get pods -A
 ```
 
-2. Check if there are newer versions available
+## Try an application
 
-```
-$ minikube update-check
-CurrentVersion: v1.33.0
-LatestVersion: v1.33.0
-```
-
-3. Update to latest version
-
-```
- curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
-   && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```sh
+kubectl create deployment hello --image=nginx:stable-alpine
+kubectl expose deployment hello --type=NodePort --port=80
+kubectl rollout status deployment/hello
+minikube service hello --url
 ```
 
-4. Check new minikube version
+Open the returned URL. Some drivers require the terminal to remain open for the tunnel. This floating image tag is for a disposable demo; pin a reviewed image digest for reproducible deployments.
 
+For external HTTP routing, see the [Networking chapter](../03%20-%20Networking.md). The community Ingress NGINX controller retired in March 2026; choose a maintained controller rather than following old addon tutorials.
+
+## Update and clean up
+
+```sh
+minikube version
+minikube update-check
 ```
-$ minikube version
-minikube version:  v1.33.0
-commit: 86fc9d54fca63f295d8737c8eacdbb7987e89c67
+
+Upgrade using your original installation method (for example `brew upgrade minikube`) and consult [Minikube upgrades](https://minikube.sigs.k8s.io/docs/handbook/updating/) before changing an existing cluster.
+
+```sh
+kubectl delete service hello
+kubectl delete deployment hello
+minikube stop
 ```
 
-
-## Confirmation 
-
-To check out the version of your kubectl, you can use the following command:
-    
-    kubectl version
-
-You should see the following output:
- 
-      <img src="screenshots/kubectlversion.png" alt="version" width="800px"/>
-
-To check out the detailed information use the following command:
-    
-    kubectl cluster-info
-
-You should see the following output:
- 
-     <img src="screenshots/clusterinfo.PNG" alt="Cluster info" width="800px"/>
+`minikube delete` removes the local cluster and its data. The original [2024 getting-started post](https://cloudmelonvision.com/if-i-were-about-to-get-started-on-kubernetes-in-2024/) remains a historical reference.

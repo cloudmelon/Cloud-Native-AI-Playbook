@@ -1,3 +1,5 @@
+# Historical Azure Vote sample: image availability is not verified.
+# For a current disposable demo, use the Minikube setup guide.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,7 +15,7 @@ spec:
         app: redis-back
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "kubernetes.io/os": linux
       containers:
       - name: redis-back
         image: redis
@@ -53,7 +55,7 @@ spec:
         app: melonvote-front
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "kubernetes.io/os": linux
       containers:
       - name: melonvote-front
         image: microsoft/azure-vote-front:v1

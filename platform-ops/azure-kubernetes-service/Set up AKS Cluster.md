@@ -1,53 +1,39 @@
-# Deploy BDC on Azure Kubernetes Service cluster
+# Set up an AKS learning cluster
 
+Reviewed 9 October 2026. Use Azure CNI Overlay for this new learning deployment. [Kubenet retires on 31 March 2028](https://learn.microsoft.com/en-us/azure/aks/configure-kubenet); the older kubenet script is historical.
 
-This repository contains the scripts that you can use to deploy a BDC cluster on Azure Kubernetes Service (AKS)  cluster with basic networking ( Kubenet ) and advanced networking ( CNI ). 
+Install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli), authenticate with `az login`, and select a subscription where you can create a resource group and AKS cluster. This creates billable resources; pricing, quotas, and regional availability depend on your subscription.
 
-This repository contains 2 bash scripts : 
-- **deploy-cni-aks.sh** : You can use it to deploy AKS cluster using CNI networking, it fits the use case that you need to deploy AKS cluster with CNI networking plugin for integration with existing virtual networks in Azure, and this network model allows greater separation of resources and controls in an enterprise environment.
+From this directory:
 
-- **deploy-kubenet-aks.sh** : You can use it to deploy AKS cluster using kubenet networking, it fits the use case that you need to deploy AKS cluster with kubenet networking. Kubenet is a basic network plugin, on Linux only. AKS cluster by default is on kubenet networking, after provisioning it, it also creates an Azure virtual network and a subnet, where your nodes get an IP address from the subnet and all pods receive an IP address from a logically different address space to the subnet of the nodes. 
-
-
-
-## Instructions
-
-### deploy-cni-aks.sh
-
-1. Download the script on the location that you are planning to use for the deployment
-
-``` bash
-curl --output deploy-cni-aks.sh https://raw.githubusercontent.com/cloudmelon/Cloud-Native-Playbook/platform-ops/azure-kubernetes-service/deploy-cni-aks.sh
+```sh
+export AZURE_SUBSCRIPTION="YOUR-SUBSCRIPTION-ID"
+export RESOURCE_GROUP="cloud-native-playbook-lab"
+export LOCATION="YOUR-AZURE-REGION"
+export AKS_NAME="playbook-aks"
+bash deploy-overlay-aks.sh
 ```
 
-2. Make the script executable
+The script uses managed identity, avoids client-secret prompts, explicitly selects Azure CNI Overlay, and lets AKS choose the region's default Kubernetes version. Check [available supported versions](https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions) before deployment. The example Pod/Service CIDRs must not overlap your connected networks; adapt them for your environment.
 
-``` bash
-chmod +x deploy-cni-aks.sh
+```sh
+az aks get-versions --location "$LOCATION" --output table
+kubectl get nodes
+kubectl get pods -A
 ```
 
-3. Run the script (make sure you are running with sudo)
+For production, design identity/RBAC, API access, network policy, workload identity, monitoring, backup, and upgrades for your requirements. This script creates a basic public-API learning cluster.
 
-``` bash
-sudo ./deploy-cni-aks.sh
+## Cleanup
+
+After confirming the dedicated lab resource group contains nothing you need:
+
+```sh
+az group delete --name "$RESOURCE_GROUP"
 ```
 
-### deploy-kubenet-aks.sh
+## Historical scripts
 
-1. Download the script on the location that you are planning to use for the deployment
+`deploy-cni-aks.sh` and `deploy-kubenet-aks.sh` retain the original implementation for reference. They contain obsolete parameters and are not validated for current Azure CLI/AKS. Use the new Overlay example instead.
 
-``` bash
-curl --output deploy-kubenet-aks.sh https://raw.githubusercontent.com/cloudmelon/Cloud-Native-Playbook/platform-ops/azure-kubernetes-service/scripts/deploy-kubenet-aks.sh
-```
-
-2. Make the script executable
-
-``` bash
-chmod +x deploy-kubenet-aks.sh
-```
-
-3. Run the script (make sure you are running with sudo)
-
-``` bash
-sudo ./deploy-kubenet-aks.sh
-```
+See [Azure CNI Overlay](https://learn.microsoft.com/en-us/azure/aks/azure-cni-overlay), [AKS managed identities](https://learn.microsoft.com/en-us/azure/aks/managed-identity-overview), and [private-cluster guidance](private-aks/Set%20up%20Private%20AKS%20Cluster.md).

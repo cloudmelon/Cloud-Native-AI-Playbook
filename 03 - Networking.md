@@ -1,41 +1,25 @@
 # Playbook Part 3 : Networking
 
-Kubernetes creates docker containers on the non network first, it then invokes the configured CNI plugins who takes care of the rest of the configuration.
+Kubernetes uses a CRI-compatible runtime to create Pod sandboxes and a Container Network Interface (CNI) implementation to configure Pod networking.
 
-## Play 0 : the Container Network Interface
+## Play 0 : Container Network Interface
 
-### 1st Glance at CNI
+[CNI](https://github.com/containernetworking/cni) defines how plugins configure container network interfaces and manage IP allocation. Choose a networking implementation appropriate for your cluster; NetworkPolicy enforcement requires a supporting implementation.
 
-**CNI (Container Network Interface)**, a Cloud Native Computing Foundation project, consists of a specification and libraries for writing plugins to configure network interfaces in Linux containers, along with a number of supported plugins. CNI concerns itself only with network connectivity of containers and removing allocated resources when the container is deleted. 
+Common TCP ports include:
 
-You can find more on Github : https://github.com/containernetworking/cni
+| Component | Port | Purpose |
+| --- | --- | --- |
+| kube-apiserver | 6443 | Kubernetes API |
+| etcd | 2379–2380 | Client and peer traffic |
+| kubelet | 10250 | Kubelet API |
+| kube-scheduler | 10259 | Secure scheduler endpoint |
+| kube-controller-manager | 10257 | Secure controller endpoint |
+| NodePort Services | 30000–32767 | Default configurable range |
 
-CNI comes with a set of supported plugins already. Such as bridge, VLAN, IPVLAN, MACVLAN, as well as IPAM plugins like host-local and dhcp. Other plugins available from third party origanisations such as weave, flannel, cilium, VMWare NSX, Calico, Infobox etc has implemented CNI standards. However Docker does not implement CNI, because it has its won set of standards known as CNM which stands for **Container Network Model** which is another standard that aims at solving container networking challenges similar to CNI but with some differences.  It is also the reason why those plugins do not natively integrate with Docker, but you can work out them, it like Kubernetes does : 
-- Create Docker on the none network
-- It then invokes the configured CNI plugins who takes care of the rest of the configuration 
+These ports are not a recommendation to expose the control plane publicly. See [official ports and protocols](https://kubernetes.io/docs/reference/networking/ports-and-protocols/).
 
-### CNI in Kubernetes
-
-Master : 
-- Kube-api requests port 6443 open
-- Kube-scheduler requests port 10251 open
-- Kube-controller-manager request port 10252 open 
-- etcd requests port 2380 open 
-
-Work node : 
-- Kubelet requests port 10250 open
-- The work nodes expose services for extenral access on 30000 to 32767
-
-You can find the details on official documentation : https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#check-required-ports
-
-Be careful the network both in cluster and pod level : 
-- Every Pod should have a unique IP address
-- Every Pod should able to communicate with other pods in the same node and other nodes without NAT
-
-As long as we can implement a solution that takes care of automatically assigning IP addresses and establish connectivity between the pods in a node as well as pods on different nodes, without to configure any NAT rules. 
-
-To relate the same concept, we have to know how it works underneath 
-
+Every Pod has its own IP, and Pod-to-Pod communication follows the Kubernetes network model. Network policies can restrict that communication.
 
 ## Play 1 : Network Policy 
 
@@ -45,7 +29,7 @@ Imagine that we have a web application and want to access the database. Here is 
 
 Here the interest of using network policy is to allow user to restrict what's allowed to talk to your pods and what your pods are allowed to talk to in your cluster. The web application can now access the database using the name of the service db. The service also gets an IP address assigned to it whenever a pod tries to reach the service using its IP or name it forwards the traffic to the back end pod in this case the database. Here is also where Kube-proxy come in. Kube-proxy is a process that runs on each node in the Kubernetes cluster, creates rules on each node to forward traffic to those services to the backend pods. One way it does this is using **IPTABLES** rules. In this case, it creates an IP tables rule on each node in the cluster to forward traffic heading to the IP of the service.  
 
-Network policies work based on a whitelist model, which means as soon as network policy select a pod using the pod selector. That pod is completely locked down, and cannot talk to anything until we provide some rule that will white list specific traffic in and out of the pod. 
+NetworkPolicy rules are additive allow rules. A selected Pod becomes isolated only in the directions listed in `policyTypes`; other directions remain unaffected. Traffic allowed by any matching policy is permitted. For a connection between two isolated Pods, the source egress and destination ingress policies must both allow it. Allow DNS egress explicitly when using default-deny egress.
 
 Definition :
 
@@ -179,7 +163,7 @@ It will return the full qualified domain name of the web service which is happen
 
 So the resolv.conf file helps you resolve the naming even though you didn't ask for full name, as this file has a search entry which is set to default.svc.cluster.local, as well as svc.cluster.local and cluster.local. This allows to find any name for the **service**, not for the pod though. For the Pod you'll still need the FQDN.  
 
-    kubectl exec busybox cat /etc/resolv.conf
+    kubectl exec busybox -- cat /etc/resolv.conf
 
 
 ### References 
@@ -212,59 +196,31 @@ You can check the examples of ingress resources and rules from
 https://kubernetes.io/docs/concepts/services-networking/ingress/
 
 
-### NGINX as Ingress Controller in its simplest form
+### Current Ingress example
 
-For NGINX, You can check the following yaml file to know how it works, it is actually defined as an Deployment :
-
-https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/static-ip/nginx-ingress-controller.yaml
-
-
-In addtion, you need some other object to help you succeed : 
-- As best practice, if you configure a ConfigMap object to pass it in if you need to change any configurations. 
-- A service account ( Auth ) with right set of permissions ( correct cluster role,  role and rolebindings ) are also needed as Ingress controller has some addtional build-in intelligence, which makes sense why it might need some addtional permission. 
-- A service to expose the ingress controller is also needed.
-
-
-A minimun ingress example is as the following : 
+Ingress uses `networking.k8s.io/v1`. The older beta APIs were removed in Kubernetes v1.22. Install a maintained controller and replace `example` below with an existing IngressClass name (`kubectl get ingressclass`). The backend Service must exist in the same namespace.
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: test-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: example
   rules:
   - http:
       paths:
       - path: /testpath
+        pathType: Prefix
         backend:
-          serviceName: test
-          servicePort: 80
- ```
+          service:
+            name: test
+            port:
+              number: 80
+```
 
-Please refer to : https://kubernetes.io/docs/concepts/services-networking/ingress/#what-is-ingress
+This forwards the original request path; rewriting is controller-specific.
 
+The community **Ingress NGINX** project retired in March 2026; its old installation and rewrite examples are historical. This retirement concerns that controller, not the Ingress API or all NGINX products. See the [Kubernetes announcement](https://kubernetes.io/blog/2026/01/29/ingress-nginx-statement/).
 
-Specifically, when you need to rewrite an ingress ( for NGINX ) :
-
-```yaml
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: melon-ingress
-  namespace: melon-space
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /contacts
-        backend:
-          serviceName: back-service
-          servicePort: 8080
- ```
-
-Refer to : https://kubernetes.github.io/ingress-nginx/examples/rewrite/
+For new deployments, evaluate [Gateway API](https://gateway-api.sigs.k8s.io/) and its [implementations](https://gateway-api.sigs.k8s.io/implementations/). Gateway API requires its CRDs and a compatible controller; it is not automatically installed with Kubernetes. Existing Ingress resources can continue with a maintained controller.

@@ -17,23 +17,17 @@ You can configure the kubelet to read the pod definition files from a directory 
 
 Kubelet check this directory periodically reads these files and creates pods on the host. Not only does it create the pod it can ensure that the pod stays alive. If the application crashed, the kubelet attempts to restart it. If you make a change to any of the file within this directory, the kubelet recreates the pod for those changes to take effect. If you remove a file from this directory the pod is deleted automatically. So these pods that are created by the kubelet on its own without the intervention from the API server or the rest of the Kubernetes cluster components are known as **static pods**. Remember this is only apply for **Pod**, no daemonsets and replicatsets as those need to interact with other parts of Kubernetes cluster.
 
-This path can be configured as the following in **kubelet.service**: 
+Configure the kubelet's configuration file (commonly `/var/lib/kubelet/config.yaml`):
 
-      --pod-manifest-path=/etc/Kubernetes/manifests
+```yaml
+staticPodPath: /etc/kubernetes/manifests
+```
 
-Or using the **--config** option :
-
-      --config=kubeconfig.yaml
-
-then in **kubeconfig.yaml** file :
-
-      staticPodPath : /etc/kubernetes/manifests
-
-Once the static pod has been created, you can use **docker ps** command to review it. The reason why not the kubectl command is we don't have the rest of the Kubernetes cluster. Kubectl utility works with kube-api server. 
+The kubelet loads this file through its `--config` option. This is kubelet configuration, not a client kubeconfig. Inspect containers with `sudo crictl ps` using the node's configured CRI endpoint (for example containerd or CRI-O). Docker's built-in dockershim was removed from Kubernetes in v1.24.
 
 In this case the kube-apiserver will still be aware of the static pod has been created later on, as after kubelet create the pod, it also creates a mirror object in the kube-apiserver. so if you use **kubectl get pods** ( append the node name though when you check it ), what you see here is just a read-only mirror of the pod, which means you can view details of the pod but you cannot edit or delete it like the usual pods ( you can only delete them by modifying the files from the nodes manifest folder ).
 
-Use case of static pod is to deploy control plane components itself as pods on a node, start by installing kubelet on all the master node then create pod definition files that uses docker images of the various control plane components such as the api server, controller, etcd etc. Place the definition files in the designated manifests folder and kubelet takes care of deploying the control plane components themselves as pods on the cluster. This way you don't have to download the binaries configure services or worry about if these services crash if any of these services were to crash since it's a static pod it will automatically be restarted by kubelet. That is how the **kubeadm** tool set up the cluster. 
+Use case of static pod is to deploy control plane components itself as pods on a node, start by installing kubelet on all the master node then create pod definition files that uses container images of the various control plane components such as the api server, controller, etcd etc. Place the definition files in the designated manifests folder and kubelet takes care of deploying the control plane components themselves as pods on the cluster. This way you don't have to download the binaries configure services or worry about if these services crash if any of these services were to crash since it's a static pod it will automatically be restarted by kubelet. That is how the **kubeadm** tool set up the cluster.
 
 You can use the following command to set up the pods bootstrapped by kubeadm : 
 
@@ -70,7 +64,7 @@ When a POD is first created the initContainer is run, and the process in the ini
 
 You can configure multiple such initContainers as well, like how we did for multi-pod containers. In that case each init container is run one at a time in sequential order.
 
-If any of the initContainers fail to complete, Kubernetes restarts the Pod repeatedly until the Init Container succeeds.
+If a regular init container fails, the kubelet restarts that container until it succeeds. With `restartPolicy: Never`, a failed init container causes the Pod to fail.
 
 
 ## Play 2 : Pod Design - Multi-container Pods
@@ -79,7 +73,7 @@ In general, it is good to have a one-to-one relationship between container and p
 
 create a pod using imperative command like the following : 
 
-    kubectl run --generator=run-pod/v1 nginx-pod --image=nginx:alpine
+    kubectl run nginx-pod --image=nginx:alpine
 
 ### Basics
 

@@ -85,7 +85,7 @@ It can also be like the following :
 
 Lookup service within the cluster using the following command : 
 
-    k run --generator=run-pod/v1 test-nslookup --image=busybox:1.28 --rm -it -- nslookup melon-service
+    k run test-nslookup --image=busybox:1.28 --rm -it -- nslookup melon-service
 
 
 Specifically if you want to look up pod DNS : 
@@ -94,4 +94,4 @@ Specifically if you want to look up pod DNS :
 
 After getting its IP address, please replace the '.' by '-', then using the following command : 
 
-    k run --generator=run-pod/v1 test-nslookup --image=busybox:1.28 --rm -it -- nslookup 10-44-0-22.default.pod
+    k run test-nslookup --image=busybox:1.28 --rm -it -- nslookup 10-44-0-22.default.pod

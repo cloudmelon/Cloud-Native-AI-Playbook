@@ -1,4 +1,5 @@
 #!/bin/bash
+# HISTORICAL EXAMPLE: not validated for current AKS/Azure CLI. See the adjacent setup guide.
 #Get Subscription ID and Azure service principal as input. It is used as default for controller, SQL Server Master instance (sa account) and Knox.
 ##
 #You can also create service principal instead of using an existing one

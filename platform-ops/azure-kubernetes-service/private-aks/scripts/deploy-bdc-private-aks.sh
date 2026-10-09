@@ -1,4 +1,5 @@
 #!/bin/bash
+# HISTORICAL EXAMPLE: not validated for current AKS/Azure CLI. See the adjacent setup guide.
 
 #Get password as input. It is used as default for controller, SQL Server Master instance (sa account) and Knox.
 #

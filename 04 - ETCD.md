@@ -1,78 +1,67 @@
-# Playbook Part 4 : ETCD
+# Playbook Part 4: etcd
 
-ETCD is a distributed reliable key-value store that is simple, secure and fast. The etcd data store stores information regarding the cluster such as the nodes, pods, configs, secrets, accounts, roles, bindings and others ( the state of the cluster and information about the cluster itself ). Every information you see when you run the **kubectl get** command is from the etcd server. Every change you make to your cluster, such as adding addtional nodes, deploying pods or replicasets are updated in the etcd server. Only once it is updated in the etcd server, is the change considered to be complete. 
+etcd is the distributed key-value store used by the Kubernetes API server to persist cluster state. Applications interact through the API server rather than writing directly to etcd. Snapshots contain sensitive data, including Secrets; encrypt backups and restrict access.
 
-I'd elaborate it further more here. Traditionally, the limit of relational database is everytime a new information needs to be added the entire table is affected and leads to a lot of empty cells. A key-value store stores information in the form of documents or pages so each individual gets a document and all information about that individual is stored with that file, these files can be in any format or structure and changes to one file does not affect the others. Similar documents while you could store and retrieve simple key and values when your data gets complex. You typically end up transacting in data formats like JSON or YAML it's easy to install and get started. 
+## Client commands
 
+Install tools matching your etcd version from [official releases](https://github.com/etcd-io/etcd/releases). Current v3 clients use `put`, not the removed v2 `set` command:
 
-### Play 1 : Install etcd 
+```sh
+etcdctl --endpoints=http://127.0.0.1:2379 put key1 value1
+etcdctl --endpoints=http://127.0.0.1:2379 get key1
+```
 
-- From scratch:
-Download the binary extract and run download all relevant binary of your OS from Github releases pages extracted and run the etcd executable. Find more details on the following : https://github.com/etcd-io/etcd
+These plain-HTTP commands are for a local test instance only. Kubernetes etcd normally requires TLS. In a kubeadm cluster, find the static Pod and configured endpoints/certificates:
 
-When you run etcd it starts a service that listens on port 2379 by default. You can then attach any clients to the etcd service to store and retrieve information. The default client that comes with etcd is the **ETCD control client**. The **etcdctl** is a command line client for ETCD. You can use it to store and retrieve key-value pairs. The usage like the following : 
+```sh
+kubectl get pods -n kube-system -l component=etcd
+sudo cat /etc/kubernetes/manifests/etcd.yaml
+```
 
-     ./etcdctl set key1 value1
+For read-only inspection, substitute the actual Pod name and certificate paths:
 
-     ./etcdctl get key1
+```sh
+kubectl exec -n kube-system etcd-CONTROL-PLANE-NAME -- etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
+  get /registry/ --prefix --keys-only
+```
 
-- Via Kubeadm:
-If you set up your cluster using kubeadm then kubeadm deploys the ETCD server for your as a **Pod** in the **kube-system** namespace. You can explore the etcd database using the etcdctl utitlity within this pod. 
+## Backup
 
+Run on a control-plane host with authorized certificate access. Use the paths from your cluster configuration:
 
-To list all keys stored by Kubernetes, run the etcdctl get command like the following :
-      kubectl exec etcd-master -n kube-system etcdctl get / --prefix -keys-only
+```sh
+sudo etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
+  snapshot save snapshot.db
+sudo etcdutl snapshot status snapshot.db --write-out=table
+```
 
-When we set up high availability in Kubernetes the only option to note for now is the advertised client url. This is the address on which ETCD listens. It happens to be on the IP of the server an on port **2379** which is the default port on which etcd listens. This is the **URL** that should be configured on the **kube-api** server when it tries to reach the etcd server.
+Use `etcdctl` to save and `etcdutl` to inspect/restore snapshots. Do not treat a copy of a running data directory as a consistent backup. Also back up the Kubernetes PKI and control-plane configuration separately.
 
-Kubernetes stores data in the specific directory structure the root directory is a registry and under that you have the various Kubernetest constructs such as minions or nodes, pods, replicasts, deployments etc. In the HA environment, you'll have multi-master, then you'll have also multiple etcd instances spread across the master nodes. In that case, make sure to specifiy the ETCD instances know about each other by setting the right parameter in the etcd service configuration. The **initial-cluster** option is where you much specify the different instances of the etcd service. 
+## Recovery
 
+Recovery replaces cluster state and needs a cluster-specific procedure. Stop all API servers from writing to the old etcd cluster. With kubeadm, control-plane components are usually static Pods, not `service kube-apiserver` units.
 
-### Play 2 :  Backup etcd 
+For Kubernetes, restore with a revision bump and mark compacted to invalidate informer caches. This is an illustrative single-member restore into a new directory, not a complete production recovery procedure:
 
-ETCD cluster is hosted on the master node while configuring ETCD we specified a location where all the data will be stored as the following, that is the directory that can be configured to be backup by the backup tool:
+```sh
+sudo etcdutl snapshot restore snapshot.db \
+  --name=control-plane-1 \
+  --data-dir=/var/lib/etcd-restored \
+  --initial-cluster=control-plane-1=https://CONTROL-PLANE-IP:2380 \
+  --initial-advertise-peer-urls=https://CONTROL-PLANE-IP:2380 \
+  --initial-cluster-token=etcd-restored-cluster \
+  --bump-revision=1000000000 --mark-compacted
+```
 
-      --data--dir=/var/lib/etcd
+Replace the peer address and size the revision bump for your write rate and backup age. Multi-member recovery requires restoring the same snapshot to each member with consistent membership parameters. Update the etcd configuration/hostPath to the restored directory before restarting components; check permissions, TLS, health, and API access.
 
-Set environment variable ETCDCTL_API=3 to use v3 API or ETCDCTL_API=2 to use v2 API. If you're using v3 version you can use the following: 
+For managed Kubernetes such as AKS, use the provider's backup/recovery procedures; customers do not manage the control-plane etcd instance directly.
 
-      ETCDCTL_API=3 etcdctl --endpoints http://127.0.0.1:4001 **snapshot save** snapshotdb --cert-file /xxx --key-file /... --ca-file
-
-  Then you can us **ls** to check the backup would be like the following : 
-
-      snapshot.db
-
- You can also check the status of your backup :
-
-      ETCDCTL_API=3 etcdctl snapshot status snapshot.db
-    
-
-
-
-
-### Play 3 :  Restore etcd 
-
-As the etcd cluster and kube-apiserver depends on it, so we have to stop the apiserver :
-
-     service kube-apiserver stop
-
-Then restore using the folllowing command : 
-
-     ETCDCTL_API=3 etcdctl snapshot restore snapshot.db  \
-      --name m1 \
-      --initial-cluster m1=http://host1:2380,m2=http://host2:2380,m3=http://host3:2380 \
-      --initial-cluster-token etcd-cluster-1 \
-      --initial-advertise-peer-urls http://host1:2380
-
-
-Then 
-
-     systemctl daemon reload 
-
-     service etcd restart
-
-     service kube-apiser start
-
-
-
-Ref : https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/recovery.md
+Follow [etcd disaster recovery](https://etcd.io/docs/v3.7/op-guide/recovery/) for the version you run and [Kubernetes etcd operations](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/).

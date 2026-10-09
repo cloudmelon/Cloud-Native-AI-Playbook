@@ -38,13 +38,13 @@ Set up auto-completion for alias :
 
 Display nodes:
 
-    Kubectl get nodes
+    kubectl get nodes
     
 is equal to :
   
     k get no
 
-Get everything in default namespace: 
+Get common workload resources in the default namespace (`all` excludes resources such as Secrets, ConfigMaps, and PVCs):
 
     kubectl get all 
 
@@ -75,15 +75,15 @@ is equal to :
 
 Get endpoints :
 
-     k get endpoint
+     k get endpointslices
     
 is equal to :
 
-    k get ep
+    k get endpointslices
     
 To refer a specific endpoint, please check :
 
-    k get ep -n yournamespace
+    k get endpointslices -n yournamespace
 
 Get custom resources 
 
@@ -120,9 +120,9 @@ Sort by capacity :
    
  By default as soon as the command is run, the resource will be created. If you simply want to test your command, use the following :
  
-    --dry-run 
+    --dry-run=client
    
-as option. This will not create the resource, instead, tell you weather the resource can be created and if your command is right.
+as option. This will not create the resource, instead, tell you whether the command can generate a resource locally. Use `--dry-run=server` to validate against your cluster admission rules without persisting it.
    
 Another useful parameter is :
 
@@ -211,12 +211,12 @@ This query can be tested on a jsonpath emulator such as http://jsonpath.com/
 
 Translation by using kubectl utility is : 
 
-    kubectl get pods -o=jsonpath='{.spec.containers[0].image}'
+    kubectl get pod nginx-pod -o=jsonpath='{.spec.containers[0].image}'
 
 
 We can also use a single command to get multiple output for example :
 
-    kubectl get pods -o=jsonpath='{.spec.containers[0].image}{.spec.containers[0].name}'
+    kubectl get pod nginx-pod -o=jsonpath='{.spec.containers[0].image}{.spec.containers[0].name}'
 
 
 There are also some predefined formatting options in here : 
@@ -227,13 +227,13 @@ There are also some predefined formatting options in here :
 
 Example here could be also like the following : 
 
-    kubectl get pods -o=jsonpath='{.spec.containers[0].image}{"\n"}{.spec.containers[0].name}'
+    kubectl get pod nginx-pod -o=jsonpath='{.spec.containers[0].image}{"\n"}{.spec.containers[0].name}'
 
 
 While using Kubectl, you can also use loops and Range which is pretty cool ( this is an example from somewhere, thanks ) : 
 
 ```shell
-    kubectl get pods -o=jsonpath='{range .items[*]}{.metadata.name} {"\t"} {.status.capacity.cpu} {"\n"}{end}'
+    kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name} {"\t"} {.status.capacity.cpu} {"\n"}{end}'
 ```
 
 What about custom columns ? we can also use like the following : 
@@ -245,7 +245,7 @@ What about custom columns ? we can also use like the following :
 To reproduct the previsous command you can use the following : 
 
 ```shell
-    kubectl get nodes -o=custom-columns=NODE:.metadata.name ,CPU:.status.capacity.cpu
+    kubectl get nodes -o=custom-columns=NODE:.metadata.name,CPU:.status.capacity.cpu
 ```
 
 To know more about JSON PATH with Kubectl, please check page : 
@@ -265,7 +265,7 @@ If you only want some items in the list. Always about quering the list quick way
 - The begining 3 items for example : 
 
 ```shell
-    $[0:2]
+    $[0:3]
 ```
 
 - Wanna skip some items you can also specify steps : 
@@ -279,7 +279,7 @@ If you only want some items in the list. Always about quering the list quick way
 - Always get the last item : 
 
 ```shell
-    $[-1:0] 
+    $[-1:]
  ```   
 
 start to the last and all the way to the end or : 

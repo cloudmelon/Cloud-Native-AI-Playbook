@@ -6,7 +6,7 @@
 <a href="https://github.com/cloudmelon/Cloud-Native-Playbook/pulls"><img src="https://img.shields.io/github/issues-pr/cloudmelon/Cloud-Native-Playbook" alt="Pull Requests Badge"/></a>
 <a href="https://github.com/cloudmelon/Cloud-Native-Playbook/issues"><img src="https://img.shields.io/github/issues/cloudmelon/Cloud-Native-Playbook" alt="Issues Badge"/></a>
 <a href="https://github.com/cloudmelon/Cloud-Native-Playbook/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/cloudmelon/Cloud-Native-Playbook?color=2b9348"></a>
-<a href="https://github.com/cloudmelon/Cloud-Native-Playbook/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cloudmelon/Cloud-Native-Playbook?color=2b9348" alt="License Badge"/></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/cloudmelon/Cloud-Native-Playbook?color=2b9348" alt="License Badge"/></a>
 </div>
 <br>
 <p align="center"><i>Loved the project? Please visit CloudMelon's <a href="https://github.com/cloudmelon">Github profile</a></i></p>
@@ -15,30 +15,32 @@
 
 # Ultimate Kubernetes Playbook
 
-This repostitory recap all useful kubectl commands and explainations for core concepts and API primitives of Kubernetes. 
+Practical commands and explanations for Kubernetes core concepts and cloud-native operations.
+
+Last reviewed: **9 October 2026**. See the [maintenance review](REVIEW.md) for changes, official sources, and validation limits. Examples are learning exercises; choose supported Kubernetes versions and pin production container images by digest.
 
 | Chapters | Description |
 | --- | --- |
-| [00 - Shortcuts](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/00%20-%20Shortcuts.md)| Kubectl commands shortcuts|
-| [01 - Pod design](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/01%20-%20Pod%20design.md) | Pod Design |
-| [02 - Rolling updates & rollbacks](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/02%20-%20Rolling%20updates%20and%20rollbacks.md) | Rolling updates & rollbacks |
-| [03 - Networking](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/03%20-%20Networking.md) | Kubernetes Networking |
-| [04 - ETCD](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/05%20-%20Volumes.md) | ETCD |
-| [05 - Volumes](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/05%20-%20Volumes.md) | Kubernetes Storage |
-| [06 - Observability](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/06%20-%20Observability.md) | Kubernetes Observability |
-| [07 - ConfigMap](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/07%20-%20ConfigMap.md) | ConfigMap |
-| [08 - Services](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/08%20-%20Services.md) | Services |
-| [09 - Security](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/09%20-%20Security.md) | Security |
+| [00 - Shortcuts](00%20-%20Shortcuts.md)| Kubectl commands shortcuts|
+| [01 - Pod design](01%20-%20Pod%20design.md) | Pod Design |
+| [02 - Rolling updates & rollbacks](02%20-%20Rolling%20updates%20and%20rollbacks.md) | Rolling updates & rollbacks |
+| [03 - Networking](03%20-%20Networking.md) | Kubernetes Networking |
+| [04 - ETCD](04%20-%20ETCD.md) | ETCD |
+| [05 - Volumes](05%20-%20Volumes.md) | Kubernetes Storage |
+| [06 - Observability](06%20-%20Observability.md) | Kubernetes Observability |
+| [07 - ConfigMap](07%20-%20ConfigMap.md) | ConfigMap |
+| [08 - Services](08%20-%20Services.md) | Services |
+| [09 - Security](09%20-%20Security.md) | Security |
 
 ## Playground 
 
-Learn how to get started with Kubernetes in 2024, check out [this blog post](https://cloudmelonvision.com/if-i-were-about-to-get-started-on-kubernetes-in-2024/)
+Historical 2024 introduction: [this blog post](https://cloudmelonvision.com/if-i-were-about-to-get-started-on-kubernetes-in-2024/)
 
 ## Set up a local Kubernetes Cluster
 | Chapters | Description |
 | --- | --- |
-| [Setup Minikube Cluster](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/platform-ops/Set%20up%20Minikube%20Cluster.md)| End-to-End how to Setup Minikube Cluster|
-| [Set up AKS cluster](https://github.com/cloudmelon/Cloud-Native-Playbook/blob/master/platform-ops/azure-kubernetes-service/Set%20up%20AKS%20Cluster.md) | End-to-End how to Set up AKS cluster |
+| [Setup Minikube Cluster](platform-ops/Set%20up%20Minikube%20Cluster.md)| End-to-End how to Setup Minikube Cluster|
+| [Set up AKS cluster](platform-ops/azure-kubernetes-service/Set%20up%20AKS%20Cluster.md) | End-to-End how to Set up AKS cluster |
 
 
 ## Kubernetes Useful references : 
@@ -52,32 +54,27 @@ Learn how to get started with Kubernetes in 2024, check out [this blog post](htt
 
 ## Cloud-Native certification
 
-There are 5 major cloud-native certifications, and all 5 certifications certified make you eligible for [Cloud Native Computing Foundation(CNCF)](https://www.cncf.io/)'s [Kubestronaut Program](https://www.cncf.io/training/kubestronaut/) under the condition that the candidate successfully maintains the following 5 certifications in goods tanding at the same time : 
-•	[Certified Kubernetes Administrator (CKA)](https://www.cncf.io/training/certification/cka/)
-•	[Certified Kubernetes Application Developer (CKAD)](https://www.cncf.io/training/certification/ckad/)
-•	[Certified Kubernetes Security Specialist (CKS)](https://www.cncf.io/training/certification/cks/)
-•	[Kubernetes and Cloud Native Associate (KCNA)](https://www.cncf.io/training/certification/kcna/)
-•	[Kubernetes and Cloud Native Security Associate (KCSA)](https://www.cncf.io/training/certification/kcsa/)
+The five Kubernetes certifications below form the [Cloud Native Computing Foundation(CNCF)](https://www.cncf.io/)'s [Kubestronaut Program](https://www.cncf.io/training/kubestronaut/) requirements; check the program page for current eligibility rules.
+- [Certified Kubernetes Administrator (CKA)](https://www.cncf.io/training/certification/cka/)
+- [Certified Kubernetes Application Developer (CKAD)](https://www.cncf.io/training/certification/ckad/)
+- [Certified Kubernetes Security Specialist (CKS)](https://www.cncf.io/training/certification/cks/)
+- [Kubernetes and Cloud Native Associate (KCNA)](https://www.cncf.io/training/certification/kcna/)
+- [Kubernetes and Cloud Native Security Associate (KCSA)](https://www.cncf.io/training/certification/kcsa/)
 
 Additional Kubernetes ecosystem : 
-•	[Prometheus Certified Associate (PCA)](https://www.cncf.io/training/certification/pca/)
-•	[Istio Certified Associate (ICA)](https://www.cncf.io/training/certification/ica/)
-•	[Cilium Certified Associate (CCA)](https://www.cncf.io/training/certification/cca/)
-•	[Certified Argo Project Associate (CAPA)](https://www.cncf.io/training/certification/capa/)
-•	[GitOps Certified Associate (CGOA)](https://www.cncf.io/training/certification/cgoa/)
+- [Prometheus Certified Associate (PCA)](https://www.cncf.io/training/certification/pca/)
+- [Istio Certified Associate (ICA)](https://www.cncf.io/training/certification/ica/)
+- [Cilium Certified Associate (CCA)](https://www.cncf.io/training/certification/cca/)
+- [Certified Argo Project Associate (CAPA)](https://www.cncf.io/training/certification/capa/)
+- [GitOps Certified Associate (CGOA)](https://www.cncf.io/training/certification/cgoa/)
 
 
 ## Azure Kubernetes services ( AKS ) useful references : 
 
 - AKS Current preview features: https://aka.ms/aks/previewfeatures
 - AKS Release notes: https://aka.ms/aks/releasenotes
-- AKS Public roadmap: http://aka.ms/aks/roadmap
+- AKS Public roadmap: https://aka.ms/aks/roadmap
 - AKS Known-issues: https://aka.ms/aks/knownissues
-
-## Interested in deploying Master-Slave architecture clustering solution on Azure ?
-
-Please check it out : 
-https://azure.microsoft.com/en-us/resources/templates/201-vmss-master-slave-customscript/
 
 ## More details on my blog : 
 

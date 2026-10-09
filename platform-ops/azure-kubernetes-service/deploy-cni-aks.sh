@@ -1,4 +1,5 @@
 #!/bin/bash
+# HISTORICAL EXAMPLE: not validated for current AKS/Azure CLI. See the adjacent setup guide.
 #Define a set of environment variables to be used in resource creations.
 #
 

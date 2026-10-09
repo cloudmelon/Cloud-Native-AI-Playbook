@@ -1,55 +1,9 @@
-# Deploy private AKS cluster with Advanced Networking (CNI)
+# Private AKS clusters
 
-This repository contains the scripts that you can use to deploy a Azure Kubernetes Service (AKS) private cluster with advanced networking ( CNI ). 
+Reviewed 9 October 2026. The scripts in `scripts/` are historical examples, not current deployment recipes. They include obsolete CLI arguments, service-principal secrets, and old firewall requirements. The SQL Server Big Data Clusters script targets a product [retired on 28 February 2025](https://learn.microsoft.com/en-us/lifecycle/announcements/sql-server-2019-big-data-clusters-retirement).
 
-This repository contains 2 bash scripts : 
+For a new deployment, start with [Microsoft's private AKS cluster documentation](https://learn.microsoft.com/en-us/azure/aks/private-clusters). Use a managed identity, design private DNS and management connectivity, and run kubectl from a network that can reach the private API endpoint.
 
-- **deploy-private-aks.sh** : You can use it to deploy private AKS cluster with private endpoint, it fits the use case that you need to deploy AKS private cluster.
+To adapt the current [Overlay learning example](../Set%20up%20AKS%20Cluster.md), add `--enable-private-cluster` to `az aks create`. This alone does not provide the management network or DNS resolution needed for kubectl. For controlled egress with user-defined routing, follow the [current outbound routing requirements](https://learn.microsoft.com/en-us/azure/aks/egress-outboundtype) and [required endpoints](https://learn.microsoft.com/en-us/azure/aks/outbound-rules-control-egress).
 
-- **deploy-private-aks-udr.sh** : You can use it to deploy private AKS cluster with private endpoint, it fits the use case that you need to deploy AKS private cluster and limit egress traffic with UDR ( User-defined Routes ). 
-
-
-## Instructions
-
-### deploy-private-aks.sh
-
-1. Download the script on the location that you are planning to use for the deployment
-
-``` bash
-curl --output deploy-private-aks.sh https://raw.githubusercontent.com/cloudmelon/Cloud-Native-Playbook/platform-ops/azure-kubernetes-service/private-aks/scripts/deploy-private-aks.sh
-```
-
-2. Make the script executable
-
-``` bash
-chmod +x deploy-private-aks.sh
-```
-
-3. Run the script (make sure you are running with sudo)
-
-``` bash
-sudo ./deploy-private-aks.sh
-```
-
-### deploy-private-aks-udr.sh
-
-1. Download the script on the location that you are planning to use for the deployment
-
-``` bash
-curl --output deploy-private-aks-udr.sh https://raw.githubusercontent.com/cloudmelon/Cloud-Native-Playbook/platform-ops/azure-kubernetes-service/private-aks/scripts/deploy-private-aks-udr.sh
-```
-
-2. Make the script executable
-
-``` bash
-chmod +x deploy-private-aks-udr.sh
-```
-
-3. Run the script (make sure you are running with sudo)
-
-``` bash
-sudo ./deploy-private-aks-udr.sh
-```
-
-
-
+The retained scripts document prior designs only. Review identities, subnet permissions, routes, DNS, supported Kubernetes versions, and current CLI options before reusing any portion.

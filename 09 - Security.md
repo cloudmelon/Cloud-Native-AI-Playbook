@@ -206,3 +206,11 @@ A yaml definition for a secret :
       command: ['sh', '-c','echo stay tuned!&& sleep 3600']
  ```
 
+
+## Current security practices
+
+Secret values are base64-encoded, not encrypted by that encoding. Configure [encryption at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/), least-privilege RBAC, and restricted backup access. Avoid committing real credentials in manifests.
+
+Use [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/) and the Pod Security Standards; PodSecurityPolicy was removed in v1.25. Prefer short-lived projected ServiceAccount tokens: modern clusters do not automatically create a long-lived token Secret for every ServiceAccount. See [ServiceAccount administration](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/).
+
+Pin reviewed container image digests, scan images, run as non-root where supported, drop unnecessary Linux capabilities, and use a read-only root filesystem when compatible with the workload. On AKS, use [Microsoft Entra Workload ID](https://learn.microsoft.com/en-us/azure/aks/workload-identity-overview) for workload-to-Azure authentication.
