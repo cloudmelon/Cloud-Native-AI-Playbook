@@ -1,5 +1,5 @@
-<h1 align="center">Cloud-Native-AI-Playbook</h1>
-<p align="center"><i>A collection of cloud-native technologies learning resources from cloudmelon</i></p>
+<h1 align="center">Cloud Native AI Playbook</h1>
+<p align="center"><i>A collection of cloud-native & AI technologies learning resources from cloudmelon</i></p>
 <div align="center">
   <a href="https://github.com/cloudmelon/Cloud-Native-Playbook/stargazers"><img src="https://img.shields.io/github/stars/cloudmelon/Cloud-Native-Playbook" alt="Stars Badge"/></a>
 <a href="https://github.com/cloudmelon/Cloud-Native-Playbook/network/members"><img src="https://img.shields.io/github/forks/cloudmelon/Cloud-Native-Playbook" alt="Forks Badge"/></a>
